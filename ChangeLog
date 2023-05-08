@@ -1,3 +1,7 @@
+0.10.2
+-------------------------------------------------------------------------
+* Made netstatus_icon_set_tooltips_enabled() work.
+
 0.10.1
 -------------------------------------------------------------------------
 * Fixed battery alarm when measurement of current is missing.
