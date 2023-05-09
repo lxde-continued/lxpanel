@@ -25,6 +25,7 @@ ui_DATA = $(ui_in_files:.glade=.ui)
 
 # Purge GtkBuilder UI files
 .glade.ui:
+	mkdir -p `dirname $@`
 	sed 's/<!--.*-->//' < $< | sed ':a;N;$$!ba;s/ *\n *</</g' > $@
 
 CLEANFILES = \
