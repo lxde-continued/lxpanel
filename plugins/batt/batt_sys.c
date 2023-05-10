@@ -254,10 +254,9 @@ battery* battery_update(battery *b)
             b->current_now = b->power_now * 1000 / b->voltage_now;
     }
 #endif
-
-    if (b->charge_now != -1 && b->charge_full != -1)
+    if (b->charge_now != -1 && b->charge_full > 0)
         promille = (b->charge_now * 1000) / b->charge_full;
-    else if (b->energy_full != -1 && b->energy_now != -1)
+    else if (b->energy_now != -1 && b->energy_full > 0)
         /* no charge data, let try energy instead */
         promille = (b->energy_now * 1000) / b->energy_full;
     else {
