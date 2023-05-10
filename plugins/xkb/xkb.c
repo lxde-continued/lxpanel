@@ -33,6 +33,7 @@
 #include <string.h>
 
 #include <X11/XKBlib.h>
+#include <X11/extensions/XKBrules.h>
 
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
@@ -121,6 +122,21 @@ static void refresh_group_xkb(XkbPlugin * xkb)
     xkb->current_group_xkb_no = xkb_state.group & (XkbNumKbdGroups - 1);
 }
 
+/*
+FIXME: delete in the future
+
+2023.05:
+
+Fix for issue https://github.com/lxde/lxpanel/issues/51
+based on https://github.com/mcz/lxpanel/commit/30d5b8d40049d344044549d3dd95191c3f55f801
+
+initialize_keyboard_description__old_way() should be removed, if no regressions
+are reported over the next few releases.
+
+*/
+
+/* TO BE REMOVED: BEGIN */
+
 static int exists_by_prefix(char * const *arr, int length, const char *sample, int prefix_length)
 {
     int i;
@@ -132,13 +148,14 @@ static int exists_by_prefix(char * const *arr, int length, const char *sample, i
     return 0;
 }
 
-/* Initialize the keyboard description initially or after a NewKeyboard event. */
-static int initialize_keyboard_description(XkbPlugin * xkb)
+static int initialize_keyboard_description__old_way(XkbPlugin * xkb)
 {
     /* Allocate a keyboard description. */
     XkbDescRec * xkb_desc = XkbAllocKeyboard();
     if (xkb_desc == NULL)
+    {
         g_warning("XkbAllocKeyboard failed\n");
+    }
     else
     {
         /* Read necessary values into the keyboard description. */
@@ -243,6 +260,77 @@ static int initialize_keyboard_description(XkbPlugin * xkb)
         }
         XkbFreeKeyboard(xkb_desc, 0, True);
     }
+}
+
+/* TO BE REMOVED: END */
+
+static int initialize_keyboard_description__new_way(XkbPlugin * xkb)
+{
+    /* Allocate a keyboard description. */
+    XkbDescRec * xkb_desc = XkbAllocKeyboard();
+    if (xkb_desc == NULL)
+    {
+        g_warning("XkbAllocKeyboard failed\n");
+        goto ikd_clean;
+    }
+
+    /* Read necessary values into the keyboard description. */
+    Display *xdisplay = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
+    XkbGetNames(xdisplay, XkbGroupNamesMask, xkb_desc);
+    if ((xkb_desc->names == NULL) || (xkb_desc->names->groups == NULL))
+    {
+        g_warning("XkbGetNames failed\n");
+        goto ikd_clean;
+    }
+
+    /* Get the group name of each keyboard layout. Infer the group count from the highest available. */
+    Atom * group_source = xkb_desc->names->groups;
+    int i;
+    for (i = 0; i < XkbNumKbdGroups; ++i)
+    {
+        g_free(xkb->group_names[i]);
+        xkb->group_names[i] = NULL;
+        if (group_source[i] != None)
+        {
+            xkb->group_count = i + 1;
+            char * p = XGetAtomName(xdisplay, group_source[i]);
+            xkb->group_names[i] = g_strdup(p);
+            XFree(p);
+        }
+    }
+    ikd_clean:
+    XkbFreeKeyboard(xkb_desc, 0, True);
+
+    /* Reinitialize the symbol name storage. */
+    XkbRF_VarDefsRec vd;
+    XkbRF_GetNamesProp(xdisplay, NULL, &vd);
+    for (i = 0; i < XkbNumKbdGroups; ++i)
+    {
+        g_free(xkb->symbol_names[i]);
+        xkb->symbol_names[i] = NULL;
+    }
+    char **symbol_source = g_strsplit(vd.layout, ",", 4);
+    for (i = 0; symbol_source[i]; ++i)
+    {
+        gssize len = -1;
+        char * comma = strchr(symbol_source[i], ':');
+        if (comma)
+            len = comma - symbol_source[i];
+        xkb->symbol_names[i] = g_ascii_strup(symbol_source[i], len);
+    }
+    g_strfreev(symbol_source);
+}
+
+
+/* Initialize the keyboard description initially or after a NewKeyboard event. */
+static int initialize_keyboard_description(XkbPlugin * xkb)
+{
+    const gchar * use_fallback = g_getenv("LXPANEL_XKB_ISSUE_51_USE_FALLBACK");
+
+    if (g_strcmp0(use_fallback, "1") == 0)
+        initialize_keyboard_description__old_way(xkb);
+    else
+        initialize_keyboard_description__new_way(xkb);
 
     /* Ensure that all elements within the name vectors are initialized. */
     int i;
