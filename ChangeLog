@@ -1,5 +1,12 @@
-0.10.2-WIP
+0.10.2
 -------------------------------------------------------------------------
+This is a bug-fix release addressing a few significant bugs in GTK3 support.
+This is also the first release made by <https://github.com/lxde-continued>
+after the former upstream abandoned the project.
+
+Please report any issues to the new issue tracker at
+<https://github.com/lxde-continued/lxpanel>.
+
 * Fix out-of-source build.
 * Fix SF#773: Pager applet breaks panel layout with GTK3.
 * Fix issue: LXPanel and/or the task bar plugin grows in width above the
