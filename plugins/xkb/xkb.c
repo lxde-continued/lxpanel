@@ -312,11 +312,20 @@ static int initialize_keyboard_description__new_way(XkbPlugin * xkb)
     char **symbol_source = g_strsplit(vd.layout, ",", 4);
     for (i = 0; symbol_source[i]; ++i)
     {
+        char * source = symbol_source[i];
         gssize len = -1;
-        char * comma = strchr(symbol_source[i], ':');
-        if (comma)
-            len = comma - symbol_source[i];
-        xkb->symbol_names[i] = g_ascii_strup(symbol_source[i], len);
+        {
+            /*
+                Handle cases:
+                    * us:2
+                    * us(basic)
+                Truncate the string by '(', ':'.
+            */
+            char * separator = strpbrk(source, "(:");
+            if (separator)
+                len = separator - source;
+        }
+        xkb->symbol_names[i] = g_ascii_strup(source, len);
     }
     g_strfreev(symbol_source);
 }
