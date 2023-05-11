@@ -10,6 +10,7 @@
 * batt: Fix division by zero with broken batteries. (SF#908)
 * netstatus: Made netstatus_icon_set_tooltips_enabled() work.
 * launchtaskbar: Add missing tooltips in the plugin settings.
+* pager: Highlight selected workspace.
 * volumealsa: Fix scrolling does not work properly when built with GTK3.
 * xkb: Fix parsing the keyboard layout configuration.
 * xkb: Fix problem with unexpectedly truncated localized strings.
