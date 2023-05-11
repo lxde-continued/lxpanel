@@ -11,6 +11,7 @@
 * netstatus: Made netstatus_icon_set_tooltips_enabled() work.
 * launchtaskbar: Add missing tooltips in the plugin settings.
 * volumealsa: Fix scrolling does not work properly when built with GTK3.
+* xkb: Fix parsing the keyboard layout configuration.
 
 0.10.1
 -------------------------------------------------------------------------
