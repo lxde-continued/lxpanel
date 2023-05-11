@@ -439,7 +439,9 @@ static void lxpanel_class_init(PanelToplevelClass *klass)
     widget_class->button_press_event = lxpanel_button_press;
     widget_class->button_release_event = _lxpanel_button_release;
     widget_class->motion_notify_event = _lxpanel_motion_notify;
+#if GTK_CHECK_VERSION(3, 0, 0)
     widget_class->enter_notify_event = lxpanel_enter_notify;
+#endif
 
     signals[ICON_SIZE_CHANGED] =
         g_signal_new("icon-size-changed",
