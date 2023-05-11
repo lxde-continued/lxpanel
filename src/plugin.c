@@ -587,6 +587,9 @@ GtkWidget *lxpanel_add_plugin(LXPanel *p, const char *name, config_setting_t *cf
     g_object_set_qdata(G_OBJECT(widget), lxpanel_plugin_qinit, (gpointer)init);
     g_object_set_qdata_full(G_OBJECT(widget), lxpanel_plugin_qsize,
                             g_new0(GdkRectangle, 1), g_free);
+
+    lxpanel_apply_hack_for_issue_41(widget);
+
     return widget;
 }
 

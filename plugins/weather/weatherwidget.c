@@ -530,6 +530,8 @@ gtk_weather_render(GtkWeather * weather)
 
   gtk_widget_set_tooltip_text(GTK_WIDGET(weather), tooltip_text);
 
+  lxpanel_apply_hack_for_issue_41(weather);
+
   g_free(tooltip_text);
 }
 

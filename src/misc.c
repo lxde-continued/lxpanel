@@ -1258,6 +1258,12 @@ static gboolean fb_button_enter(GtkImage * widget, GdkEventCrossing * event)
 /* Handler for "leave-notify-event" signal on image that has highlighting requested. */
 static gboolean fb_button_leave(GtkImage * widget, GdkEventCrossing * event, gpointer user_data)
 {
+#if GTK_CHECK_VERSION(3, 0, 0)
+    /* XXX: a part of workaround for https://github.com/lxde/lxpanel/issues/41 */
+    GtkWidget *parent = gtk_widget_get_toplevel(GTK_WIDGET(widget));
+    gtk_widget_set_has_tooltip(parent, FALSE);
+#endif
+
     if (gtk_image_get_storage_type(widget) == GTK_IMAGE_PIXBUF)
     {
         ImgData * data = (ImgData *) g_object_get_qdata(G_OBJECT(widget), img_data_id);
@@ -1649,6 +1655,40 @@ gboolean lxpanel_launch_app(const char* exec, GList* files, gboolean in_terminal
     g_free(cmd);
 
     return (error == NULL);
+}
+
+/* XXX: workaround for https://github.com/lxde/lxpanel/issues/41 */
+/*
+    Tooltip positioning bug in GTK3.
+    * https://bugs.mageia.org/show_bug.cgi?id=30574
+    * https://github.com/lxde/lxpanel/issues/41
+*/
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+static gboolean enable_query_tooltip(gpointer p_data)
+{
+    GtkWidget *widget = p_data;
+    gtk_widget_set_has_tooltip(widget, TRUE);
+    return G_SOURCE_REMOVE;
+}
+
+static gboolean plugin_query_tooltip(GtkWidget *widget, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer p_data)
+{
+    gtk_widget_set_has_tooltip(widget, FALSE);
+    GtkWidget *parent = gtk_widget_get_toplevel(widget);
+    gtk_widget_set_tooltip_text(parent, gtk_widget_get_tooltip_text(widget));
+    g_timeout_add(2 * G_TIME_SPAN_MILLISECOND, enable_query_tooltip, widget);
+    return TRUE;
+}
+#endif
+
+void lxpanel_apply_hack_for_issue_41(GtkWidget *widget)
+{
+#if GTK_CHECK_VERSION(3, 0, 0)
+    g_signal_connect(widget, "query-tooltip", G_CALLBACK(plugin_query_tooltip), NULL);
+#else
+    (void) widget;
+#endif
 }
 
 /* vim: set sw=4 et sts=4 : */

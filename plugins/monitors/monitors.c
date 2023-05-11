@@ -285,6 +285,9 @@ cpu_tooltip_update (Monitor *m)
         tooltip_text = g_strdup_printf(_("CPU usage: %.2f%%"),
                 m->stats[ring_pos] * 100);
         gtk_widget_set_tooltip_text(m->da, tooltip_text);
+
+        lxpanel_apply_hack_for_issue_41(m->da);
+
         g_free(tooltip_text);
     }
 }
@@ -387,6 +390,9 @@ mem_tooltip_update (Monitor *m)
                 m->stats[ring_pos] * m->total / 1024,
                 m->stats[ring_pos] * 100);
         gtk_widget_set_tooltip_text(m->da, tooltip_text);
+
+        lxpanel_apply_hack_for_issue_41(m->da);
+
         g_free(tooltip_text);
     }
 }

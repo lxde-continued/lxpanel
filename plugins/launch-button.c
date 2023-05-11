@@ -179,6 +179,9 @@ LaunchButton *launch_button_new(LXPanel *panel, GtkWidget *plugin, FmPath *id,
             return NULL;
         }
     }
+
+    lxpanel_apply_hack_for_issue_41(GTK_WIDGET(self));
+
     return self;
 }
 

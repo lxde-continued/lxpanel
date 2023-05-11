@@ -564,6 +564,8 @@ static GtkWidget * constructor(LXPanel *panel, config_setting_t *settings)
     /* Start the update loop */
     lx_b->timer = g_timeout_add_seconds( 9, (GSourceFunc) update_timout, (gpointer) lx_b);
 
+    lxpanel_apply_hack_for_issue_41(lx_b->drawingArea);
+
     RET(p);
 }
 

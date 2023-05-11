@@ -48,6 +48,8 @@ struct statusicon *create_statusicon(LXPanel *panel, GtkWidget *box,
     /* tooltip */
     gtk_widget_set_tooltip_text(newicon->main, tooltips);
 
+    lxpanel_apply_hack_for_issue_41(newicon->main);
+
     return newicon;
 }
 

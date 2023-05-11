@@ -269,6 +269,8 @@ extern GtkWidget *lxpanel_image_new_for_fm_icon(LXPanel *panel, FmIcon *icon,
 extern gboolean lxpanel_image_change_icon(GtkWidget *img, const gchar *name,
                                           const char *fallback);
 
+extern void lxpanel_apply_hack_for_issue_41(GtkWidget *widget);
+
 G_END_DECLS
 
 #endif

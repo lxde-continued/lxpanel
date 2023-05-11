@@ -102,6 +102,10 @@ struct _TaskButton
     unsigned int same_name :1;  /* TRUE if all visible windows have the same name */
     unsigned int entered_state :1; /* TRUE if cursor is inside taskbar button */
     unsigned int has_flash :1;  /* used by task_button_set_flash_state() */
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GMutex idle_query_tp_mutex; /* mutex for callback reenabling query-tooltip */
+    guint idle_query_tooltip;   /* id of callback reenabling query-tooltip */
+#endif
 };
 
 enum {
@@ -1131,6 +1135,38 @@ static void task_update_icon(TaskButton *task, TaskDetails *details, Atom source
                                                          task, NULL);
 }
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+static gboolean enable_query_tooltip(gpointer p_data)
+{
+    TaskButton *task = p_data;
+    if (g_mutex_trylock(&task->idle_query_tp_mutex))
+    {
+        if (!g_source_is_destroyed(g_main_current_source()))
+        {
+            GtkWidget *widget = p_data;
+            task->idle_query_tooltip = 0;
+            gtk_widget_set_has_tooltip(widget, TRUE);
+        }
+        g_mutex_unlock(&task->idle_query_tp_mutex);
+    }
+    return G_SOURCE_REMOVE;
+}
+
+static gboolean task_query_tooltip(GtkWidget *widget, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer p_data)
+{
+    TaskButton *task = widget;
+    if (g_mutex_trylock(&task->idle_query_tp_mutex))
+    {
+        gtk_widget_set_has_tooltip(widget, FALSE);
+        GtkWidget *parent = gtk_widget_get_toplevel(widget);
+        gtk_widget_set_tooltip_text(parent, gtk_widget_get_tooltip_text(widget));
+        task->idle_query_tooltip = g_timeout_add(2 * G_TIME_SPAN_MILLISECOND, enable_query_tooltip, widget);
+        g_mutex_unlock(&task->idle_query_tp_mutex);
+    }
+    return TRUE;
+}
+#endif
+
 /* Draw the label and tooltip on a taskbar button. */
 static void task_draw_label(TaskButton *tb, gboolean bold_style, gboolean force)
 {
@@ -1227,6 +1263,12 @@ G_DEFINE_TYPE(TaskButton, task_button, GTK_TYPE_TOGGLE_BUTTON)
 static void task_button_finalize(GObject *object)
 {
     TaskButton *self = (TaskButton *)object;
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+    if (self->idle_query_tooltip)
+        g_source_remove(self->idle_query_tooltip);
+    g_mutex_clear(&self->idle_query_tp_mutex);
+#endif
 
     /* free all data */
     g_free(self->res_class);
@@ -1368,6 +1410,18 @@ static gboolean task_button_leave_notify_event(GtkWidget *widget, GdkEventCrossi
 {
     TaskButton *tb = PANEL_TASK_BUTTON(widget);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+    if (g_mutex_trylock(&tb->idle_query_tp_mutex))
+    {
+        if (tb->idle_query_tooltip)
+        {
+            GtkWidget *parent = gtk_widget_get_toplevel(widget);
+            gtk_widget_set_has_tooltip(parent, FALSE);
+        }
+        g_mutex_unlock(&tb->idle_query_tp_mutex);
+    }
+#endif
+
     tb->entered_state = FALSE;
     task_draw_label(tb, FALSE, FALSE);
     if (tb->flags.flat_button)
@@ -1495,6 +1549,10 @@ TaskButton *task_button_new(Window win, gint desk, gint desks, LXPanel *panel,
     assemble_gui(self);
     /* and finally set visibility on it */
     gtk_widget_set_visible(GTK_WIDGET(self), self->n_visible > 0);
+#if GTK_CHECK_VERSION(3, 0, 0)
+    g_mutex_init(&self->idle_query_tp_mutex);
+    g_signal_connect(GTK_WIDGET(self), "query-tooltip", G_CALLBACK(task_query_tooltip), NULL);
+#endif
     return self;
 }
 

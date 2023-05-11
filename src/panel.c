@@ -401,6 +401,15 @@ static gboolean lxpanel_button_press(GtkWidget *widget, GdkEventButton *event)
     return FALSE;
 }
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+/* XXX: a part of workaround for https://github.com/lxde/lxpanel/issues/41 */
+static gboolean lxpanel_enter_notify(GtkWidget* widget, GdkEventCrossing event, gpointer p_data)
+{
+    gtk_widget_set_has_tooltip(widget, FALSE);
+    return FALSE;
+}
+#endif
+
 static void lxpanel_class_init(PanelToplevelClass *klass)
 {
     GObjectClass *gobject_class = (GObjectClass *)klass;
@@ -430,6 +439,7 @@ static void lxpanel_class_init(PanelToplevelClass *klass)
     widget_class->button_press_event = lxpanel_button_press;
     widget_class->button_release_event = _lxpanel_button_release;
     widget_class->motion_notify_event = _lxpanel_motion_notify;
+    widget_class->enter_notify_event = lxpanel_enter_notify;
 
     signals[ICON_SIZE_CHANGED] =
         g_signal_new("icon-size-changed",

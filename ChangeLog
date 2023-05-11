@@ -4,6 +4,7 @@
 * Fix SF#773: Pager applet breaks panel layout with GTK3.
 * Fix issue: LXPanel and/or the task bar plugin grows in width above the
     configured size with GTK3.
+* Apply partial workaround for GTK3 tooltip positioning bug. (MAGEIA#30574)
 * Calculate _NET_WM_STRUT_PARTIAL with respect of HiDPI scale factor when built
     with GTK3.
 * batt: Fix division by zero with broken batteries. (SF#908)
