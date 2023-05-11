@@ -77,7 +77,7 @@ typedef struct {
 
 } XkbPlugin;
 
-#define MAX_MARKUP_LEN  64
+#define MAX_MARKUP_LEN  512 /*  FIXME: get rid of hardcoded sizes! */
 #define MAX_ROW_LEN  64
 
 extern void xkb_redraw(XkbPlugin * xkb);
